@@ -1,6 +1,5 @@
 import RootLayout from "./layout";
 
-// app/terms/page.tsx
 export default function TermsPage() {
   return (
     <RootLayout>
