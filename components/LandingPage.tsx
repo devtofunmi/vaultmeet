@@ -54,18 +54,31 @@ const testimonials = [
 
 const faqs = [
   {
-    question: 'Is VaultMeet anonymous?',
-    answer: 'Yes, your profile is confidential and never publicly visible.',
+    question: 'How do I get started?',
+    answer: 'Click on "Apply as Seeker" or "Apply as Sponsor" to fill out your application form. Once submitted, you’ll be prompted to make a payment to complete the process.',
   },
   {
-    question: 'How are sponsors verified?',
-    answer: 'We use a secure identity verification process for all users.',
+    question: 'What happens after I make a payment?',
+    answer: 'After payment, our team will manually review your application and match you with a suitable sponsor or seeker. You’ll be contacted via Gmail with next steps.',
   },
   {
-    question: 'Can I cancel anytime?',
-    answer: 'Yes, you can cancel your subscription anytime without penalties.',
+    question: 'Is my profile visible to the public?',
+    answer: 'No. All profiles are private and handled confidentially by our team. We do not publicly display user information.',
   },
-]
+  {
+    question: 'Do I get a refund if I’m not matched?',
+    answer: 'Due to the manual and personalized nature of our process, payments are non-refundable. However, we ensure each match request is taken seriously.',
+  },
+  {
+    question: 'Can I contact my match directly?',
+    answer: 'Currently, our team facilitates the first connection via email. Direct contact may be established after both parties agree.',
+  },
+  {
+    question: 'What payment methods are accepted?',
+    answer: 'We accept all major cards through a secure payment gateway. Payment is required before matching begins.',
+  },
+];
+
 
 const pricingPlans = [
   {
@@ -198,29 +211,30 @@ const VaultMeetLanding: React.FC = () => {
       </AnimatedSection>
 
       {/* Seeker & Sponsor Benefits */}
-      <AnimatedSection>
-        <section className="py-20 px-6 max-w-6xl mx-auto">
-          <h2 className="text-4xl font-bold text-center mb-12">Seeker & Sponsor Benefits</h2>
-          <div className="grid md:grid-cols-2 gap-10">
-            <div className="bg-indigo-50 p-6 rounded-lg">
-              <h3 className="text-2xl font-semibold mb-4 text-purple-700">For Seekers</h3>
-              <ul className="list-disc list-inside text-gray-700 space-y-2">
-                <li>Access to verified sponsors</li>
-                <li>Confidential and secure messaging</li>
-                <li>Profile spotlight for more matches</li>
-              </ul>
-            </div>
-            <div className="bg-pink-50 p-6 rounded-lg">
-              <h3 className="text-2xl font-semibold mb-4 text-pink-700">For Sponsors</h3>
-              <ul className="list-disc list-inside text-gray-700 space-y-2">
-                <li>Curated matches with real seekers</li>
-                <li>Priority matching options</li>
-                <li>Direct access to VIP seeker profiles</li>
-              </ul>
-            </div>
-          </div>
-        </section>
-      </AnimatedSection>
+<AnimatedSection>
+  <section className="py-20 px-6 max-w-6xl mx-auto">
+    <h2 className="text-4xl font-bold text-center mb-12">Seeker & Sponsor Benefits</h2>
+    <div className="grid md:grid-cols-2 gap-10">
+      <div className="bg-indigo-50 p-6 rounded-lg">
+        <h3 className="text-2xl font-semibold mb-4 text-purple-700">For Seekers</h3>
+        <ul className="list-disc list-inside text-gray-700 space-y-2">
+          <li>One-time or unlimited match opportunities</li>
+          <li>Verified and trusted sponsors only</li>
+          <li>Email notification once matched</li>
+        </ul>
+      </div>
+      <div className="bg-pink-50 p-6 rounded-lg">
+        <h3 className="text-2xl font-semibold mb-4 text-pink-700">For Sponsors</h3>
+        <ul className="list-disc list-inside text-gray-700 space-y-2">
+          <li>Verified seekers screened by our team</li>
+          <li>Profile highlight options with Premium & Elite plans</li>
+          <li>Support from VaultMeet to schedule introductions</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</AnimatedSection>
+
 
             {/* FAQ */}
       <AnimatedSection>
