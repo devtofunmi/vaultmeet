@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 
@@ -17,11 +18,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* Sticky navbar */}
         <div className="border-b px-6 py-4 sticky top-0 z-50 bg-white shadow-sm">
           <div className="flex justify-between items-center">
+            <Link href="/" >
             <h1 className="text-xl font-bold">VaultMeet</h1>
+            </Link>
 
             {/* Desktop Nav */}
             <nav className="hidden md:flex space-x-4">
-              <a href="/" className="hover:underline">Home</a>
               <a href="/apply-seeker" className="hover:underline">Apply (Seeker)</a>
               <a href="/apply-sponsor" className="hover:underline">Apply (Sponsor)</a>
               <a href="/contact" className="hover:underline">Contact</a>
@@ -42,10 +44,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           {/* Mobile Menu */}
           {isMenuOpen && (
             <nav className="md:hidden mt-4 space-y-2 flex flex-col">
-              <a href="/" className="hover:underline">Home</a>
-              <a href="/apply-seeker" className="hover:underline">Apply (Seeker)</a>
-              <a href="/apply-sponsor" className="hover:underline">Apply (Sponsor)</a>
-              <a href="/contact" className="hover:underline">Contact</a>
+              <a href="/apply-seeker" className="hover:bg-gray-100">Apply (Seeker)</a>
+              <a href="/apply-sponsor" className="hover:bg-gray-100">Apply (Sponsor)</a>
+              <a href="/contact" className="hover:bg-gray-100">Contact</a>
             </nav>
           )}
         </div>
