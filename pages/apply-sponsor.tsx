@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import RootLayout from './layout'
 
 const ApplySponsor: React.FC = () => {
   const [form, setForm] = useState({
@@ -49,7 +50,7 @@ const ApplySponsor: React.FC = () => {
 
   if (submitted) {
     return (
-      <div className="max-w-xl mx-auto p-8 text-center">
+      <div className="max-w-xl mx-auto text-black p-8 text-center">
         <h2 className="text-3xl font-bold mb-4">Application Received</h2>
         <p>Thank you for applying as a sponsor. We will review your application and get back to you soon.</p>
       </div>
@@ -57,9 +58,11 @@ const ApplySponsor: React.FC = () => {
   }
 
   return (
-    <main className="max-w-xl mx-auto p-6">
-      <h1 className="text-4xl font-bold mb-6 text-center">Apply as a Sugar Sponsor</h1>
-      <form onSubmit={handleSubmit} noValidate className="space-y-6">
+    <RootLayout>
+    <main>
+      <h1 className="text-4xl font-bold mb-6 text-center text-indigo-60 py-5">Apply as a Sugar Sponsor</h1>
+      <div className="max-w-xl w-full mx-auto p-6 text-black">
+        <form onSubmit={handleSubmit} noValidate className="space-y-6">
         <div>
           <label htmlFor="fullName" className="block font-semibold mb-1">
             Full Name
@@ -191,7 +194,10 @@ const ApplySponsor: React.FC = () => {
           Submit Application
         </button>
       </form>
+      </div>
+      
     </main>
+    </RootLayout>
   )
 }
 
