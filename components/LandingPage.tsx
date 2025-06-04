@@ -70,7 +70,7 @@ const VaultMeetLanding: React.FC = () => {
   return (
     <main className="font-sans text-gray-900 bg-white min-h-screen">
       {/* Navbar */}
-      <nav className="bg-indigo-600 text-white p-4 flex justify-between items-center  mx-auto">
+      <nav className="bg-indigo-600 sticky top-0 text-white p-4 flex justify-between items-center  mx-auto">
         <a href="/" className="text-2xl font-bold">
           VaultMeet
         </a>
