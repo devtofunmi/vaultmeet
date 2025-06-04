@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import RootLayout from './layout'
 
 const ApplySeeker: React.FC = () => {
   const [form, setForm] = useState({
@@ -45,7 +46,7 @@ const ApplySeeker: React.FC = () => {
 
   if (submitted) {
     return (
-      <div className="max-w-xl mx-auto p-8 text-center">
+      <div className="max-w-xl mx-auto p-8 text-black text-center">
         <h2 className="text-3xl font-bold mb-4">Application Received</h2>
         <p>Thank you for applying as a seeker. We will review your application and get back to you soon.</p>
       </div>
@@ -53,9 +54,11 @@ const ApplySeeker: React.FC = () => {
   }
 
   return (
-    <main className="max-w-xl mx-auto p-6">
-      <h1 className="text-4xl font-bold mb-6 text-center">Apply as a Sugar Seeker</h1>
-      <form onSubmit={handleSubmit} noValidate className="space-y-6">
+    <RootLayout>
+    <main >
+      <h1 className="text-4xl font-bold mb-6 text-center text-indigo-60 py-5">Apply as a Sugar Seeker</h1>
+      <div className="max-w-xl w-full mx-auto p-6 text-black">
+        <form onSubmit={handleSubmit} noValidate className="space-y-6">
         <div>
           <label htmlFor="fullName" className="block font-semibold mb-1">
             Full Name
@@ -165,12 +168,15 @@ const ApplySeeker: React.FC = () => {
 
         <button
           type="submit"
-          className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition"
+          className="w-full cursor-pointer bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition"
         >
           Submit Application
         </button>
       </form>
+      </div>
+      
     </main>
+    </RootLayout>
   )
 }
 
