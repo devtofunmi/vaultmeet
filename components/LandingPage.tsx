@@ -124,7 +124,7 @@ const VaultMeetLanding: React.FC = () => {
 
       {/* Hero Section */}
       <AnimatedSection>
-        <section className="py-32 px-6 bg-indigo-50 mx-auto text-center">
+        <section id="home" className="py-32 px-6 bg-indigo-50 mx-auto text-center">
           <h1 className="text-5xl font-extrabold mb-6">Connect with sponsors who truly care.</h1>
           <p className="text-xl max-w-xl mx-auto mb-12 text-gray-700">
             VaultMeet is a confidential and secure platform to help you find genuine sponsorships easily and safely.

@@ -14,16 +14,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     { label: 'Contact', href: '/contact' },
   ];
 
-  return (
-    <html lang="en">
-      <Head>
-        <title>VaultMeet – Exclusive Connections</title>
-        <meta
-          name="description"
-          content="Connect with elite sponsors and attractive seekers through VaultMeet, the premium platform for exclusive arrangements."
-        />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-      </Head>
+  return (     
       <div className="text-gray-800 bg-white">
         {/* Navbar */}
         <div className="sticky top-0 z-50 bg-white border-b shadow-sm px-6 py-4">
@@ -90,6 +81,5 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           </div>
         </footer>
       </div>
-    </html>
   );
 }
