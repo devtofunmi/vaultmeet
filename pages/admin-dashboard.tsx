@@ -90,7 +90,7 @@ export default function AdminDashboard() {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-900 text-white">
         <div className="p-8 bg-gray-800 rounded-xl shadow-lg w-full max-w-md">
-          <h2 className="text-2xl font-semibold mb-4">Admin Login</h2>
+          <h2 className="text-2xl font-semibold mb-4">Welcome Chief</h2>
           <input
             type="password"
             value={input}
