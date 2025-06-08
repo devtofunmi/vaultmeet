@@ -2,6 +2,9 @@
 
 import React, { useState } from 'react'
 import RootLayout from './layout'
+import { supabase } from '@/lib/supabaseClient'
+import { toast, ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
 const ApplySeeker: React.FC = () => {
   const [form, setForm] = useState({
@@ -11,16 +14,24 @@ const ApplySeeker: React.FC = () => {
     location: '',
     bio: '',
     desiredSponsorType: '',
+    paymentProof: null as File | null,
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [paymentStep, setPaymentStep] = useState(false)
   const [paymentSuccess, setPaymentSuccess] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [uploadedPaymentUrl, setUploadedPaymentUrl] = useState<string | null>(null)
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
+    const { name, value, files } = e.target as HTMLInputElement
+    if (name === 'paymentProof' && files) {
+      setForm({ ...form, paymentProof: files[0] })
+    } else {
+      setForm({ ...form, [name]: value })
+    }
   }
 
   const validate = () => {
@@ -35,75 +46,155 @@ const ApplySeeker: React.FC = () => {
     if (!form.bio.trim()) newErrors.bio = 'Please tell us about yourself'
     if (!form.desiredSponsorType.trim())
       newErrors.desiredSponsorType = 'Select a sponsor type'
-
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!validate()) return
-
-    // TODO: Send form data to backend here (example below)
-    /*
-    try {
-      const response = await fetch('/api/apply', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      })
-      if (!response.ok) throw new Error('Failed to submit application')
-    } catch (error) {
-      console.error(error)
-      // Handle error (show message, etc.)
-      return
-    }
-    */
-
-    // After successful backend submission, show payment step
     setPaymentStep(true)
   }
 
-  // Payment success handler (replace with real payment callback)
-  const handlePaymentSuccess = () => {
-    setPaymentSuccess(true)
+  const uploadToCloudinary = async (file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('upload_preset', 'users_avater')
+
+    try {
+      const response = await fetch(
+        'https://api.cloudinary.com/v1_1/drirsnp0c/image/upload',
+        {
+          method: 'POST',
+          body: formData,
+        }
+      )
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error?.message || 'Upload failed')
+      }
+
+      const data = await response.json()
+      return data.secure_url
+    } catch (error) {
+      toast.error('Upload to Cloudinary failed.')
+      throw error
+    }
   }
 
-  // After payment success: show thank you message
-  if (paymentSuccess) {
+  const handlePaymentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!form.paymentProof) {
+      toast.error('Please upload a payment proof.')
+      return
+    }
+
+    setLoading(true)
+
+    try {
+      const imageUrl = await uploadToCloudinary(form.paymentProof)
+      setUploadedPaymentUrl(imageUrl)
+
+      const { data, error } = await supabase.from('seekers').insert([
+        {
+          full_name: form.fullName,
+          email: form.email,
+          age: form.age,
+          location: form.location,
+          bio: form.bio,
+          sponsor_type: form.desiredSponsorType,
+          payment_proof_url: imageUrl,
+          payment_status: 'pending',
+          created_at: new Date().toISOString(),
+        },
+      ])
+
+      if (error) {
+        console.error('Supabase error:', error)
+        toast.error('Something went wrong while saving your application.')
+      } else {
+        setPaymentSuccess(true)
+        toast.success('Application submitted successfully!')
+        setForm({
+          fullName: '',
+          email: '',
+          age: '',
+          location: '',
+          bio: '',
+          desiredSponsorType: '',
+          paymentProof: null,
+        })
+        setPaymentStep(false)
+      }
+    } catch (err) {
+      console.error('Upload or submit error:', err)
+      toast.error('Unexpected error occurred.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+   if (paymentSuccess) {
     return (
-      <div className="max-w-xl mx-auto p-8 text-black text-center">
-        <h2 className="text-3xl font-bold mb-4">Application Received</h2>
+      <RootLayout>
+
+      <div className="max-w-xl h-screen mx-auto p-8 text-black text-center">
+        <h2 className="text-3xl font-bold mb-4">Application Submitted</h2>
         <p>
-       Thank you for your payment and interest in VaultMeet.
-       Our team is currently reviewing your application.
-      You’ll receive an email soon with your personalized match and next steps.
+          Thank you! Your application and payment proof have been received. Our team will
+          review and contact you shortly.
         </p>
       </div>
+      </RootLayout>
     )
   }
 
-  // Payment step UI after form submission but before payment done
   if (paymentStep) {
     return (
-      <div className="max-w-xl mx-auto p-8 text-black text-center">
-        <h2 className="text-3xl font-bold mb-4">Complete Your Payment</h2>
-        <p className="mb-6">
-          Please complete your one-time payment of <strong>$199</strong> to
-          proceed.
-        </p>
-        {/* Replace this with real payment integration (Stripe, Paystack, etc) */}
-        <button
-          onClick={handlePaymentSuccess}
-          className="bg-indigo-600 cursor-pointer text-white py-3 px-6 rounded hover:bg-indigo-700 transition"
-        >
-          Click to continue
-        </button>
+      <RootLayout>
+        <main>
+          <ToastContainer />
+          <div className="max-w-xl mx-auto w-11/12 p-8  h-screen rounded-lg  text-black">
+        <h2 className="text-2xl md:text-3xl font-semibold mb-4 text-center">
+        Complete Your Application
+      </h2>
+      <p className="mb-6 text-center text-gray-700">
+        Please make a one-time payment of{' '}
+        <span className="font-semibold text-black">$199</span> to continue.
+      </p>
+        <div className="mb-4 bg-gray-200 p-4 rounded">
+          <p><strong>Bank Transfer / Crypto (USDT)</strong></p>
+          <p>Account Name: VaultMeet</p>
+          <p>Account Number: 1234567890</p>
+          <p>Crypto Wallet: 0xABC...123</p>
+        </div>
+        <form onSubmit={handlePaymentSubmit}>
+          <label className="block mb-2 font-bold">Upload Payment Proof</label>
+          <input
+            type="file"
+            name="paymentProof"
+            accept="image/*"
+            onChange={handleChange}
+            className="mb-2"
+          />
+          {errors.paymentProof && <p className="text-red-500 text-sm">{errors.paymentProof}</p>}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="mt-4  w-full cursor-pointer px-4 py-2 bg-black text-white rounded hover:bg-gray-800"
+          >
+            {loading ? 'Submitting...' : 'Submit Proof'}
+          </button>
+        </form>
       </div>
+      </main> 
+      </RootLayout>
+        
     )
   }
 
-  // The main form UI
   return (
     <RootLayout>
       <main>
@@ -112,6 +203,7 @@ const ApplySeeker: React.FC = () => {
         </h1>
         <div className="max-w-xl w-full mx-auto p-6 text-black">
           <form onSubmit={handleSubmit} noValidate className="space-y-6">
+            {/* Full Name */}
             <div>
               <label htmlFor="fullName" className="block font-semibold mb-1">
                 Full Name
@@ -133,6 +225,7 @@ const ApplySeeker: React.FC = () => {
               )}
             </div>
 
+            {/* Email */}
             <div>
               <label htmlFor="email" className="block font-semibold mb-1">
                 Email
@@ -154,6 +247,7 @@ const ApplySeeker: React.FC = () => {
               )}
             </div>
 
+            {/* Age */}
             <div>
               <label htmlFor="age" className="block font-semibold mb-1">
                 Age
@@ -176,6 +270,7 @@ const ApplySeeker: React.FC = () => {
               )}
             </div>
 
+            {/* Location */}
             <div>
               <label htmlFor="location" className="block font-semibold mb-1">
                 Location
@@ -197,6 +292,7 @@ const ApplySeeker: React.FC = () => {
               )}
             </div>
 
+            {/* Bio */}
             <div>
               <label htmlFor="bio" className="block font-semibold mb-1">
                 Tell us about yourself
@@ -218,11 +314,9 @@ const ApplySeeker: React.FC = () => {
               )}
             </div>
 
+            {/* Sponsor Type */}
             <div>
-              <label
-                htmlFor="desiredSponsorType"
-                className="block font-semibold mb-1"
-              >
+              <label htmlFor="desiredSponsorType" className="block font-semibold mb-1">
                 Desired Sponsor Type
               </label>
               <select
@@ -248,12 +342,13 @@ const ApplySeeker: React.FC = () => {
               )}
             </div>
 
+            
             <button
               type="submit"
-              className="w-full cursor-pointer bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition"
-            >
-              Submit Application
-            </button>
+              className="w-full py-2 bg-black text-white rounded hover:bg-gray-800"
+              >
+                        {loading ? 'Please wait...' : 'Continue to payment'}
+</button>
           </form>
         </div>
       </main>
