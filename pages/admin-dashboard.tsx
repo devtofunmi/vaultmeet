@@ -88,8 +88,8 @@ export default function AdminDashboard() {
 
   if (!passwordVerified) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gray-900 text-white">
-        <div className="p-8 bg-gray-800 rounded-xl shadow-lg w-full max-w-md">
+      <div className="flex  h-screen items-center justify-center bg-gray-900 text-white">
+        <div className="p-8 bg-gray-800 rounded-xl shadow-lg w-4/5 max-w-md">
           <h2 className="text-2xl font-semibold mb-4">Welcome Chief</h2>
           <input
             type="password"
@@ -165,7 +165,7 @@ export default function AdminDashboard() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-auto">
         {/* Mobile Topbar */}
-        <header className="lg:hidden flex items-center justify-between bg-gray-900 p-4">
+        <header className="lg:hidden fixed top-o shadow-md w-full flex items-center justify-between bg-gray-900 p-4">
           <h1 className="text-xl font-semibold">Dashboard</h1>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
