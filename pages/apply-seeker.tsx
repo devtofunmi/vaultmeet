@@ -198,7 +198,7 @@ const ApplySeeker: React.FC = () => {
   return (
     <RootLayout>
       <main>
-        <h1 className="text-4xl font-bold mb-6 text-center text-indigo-600 py-5">
+        <h1 className="text-4xl font-bold mb-6 text-center py-5">
           Apply as a Sugar Seeker
         </h1>
         <div className="max-w-xl w-full mx-auto p-6 text-black">
