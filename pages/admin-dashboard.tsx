@@ -55,14 +55,48 @@ export default function AdminDashboard() {
     setLoading(false)
   }
 
-  const updateStatus = async (id: string, status: 'approved' | 'rejected') => {
-    const { error } = await supabase.from('seekers').update({ status }).eq('id', id)
-    if (error) toast.error(`Failed to update`)
-    else {
-      toast.success(`Marked as ${status}`)
-      fetchSeekers()
-    }
+const updateStatus = async (id: string, status: 'approved' | 'rejected') => {
+  const seeker = seekers.find(s => s.id === id)
+
+  const { error } = await supabase.from('seekers').update({ status }).eq('id', id)
+
+  if (error) {
+    toast.error(`Failed to update`)
+  } else {
+    toast.success(`Marked as ${status}`)
+    fetchSeekers()
+
+   if (status === 'approved' && seeker) {
+  try {
+    const res = await fetch('/api/send-approval-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: seeker.email, name: seeker.full_name }),
+    })
+    const result = await res.json()
+    if (!result.success) throw new Error()
+    toast.success('Approval email sent!')
+  } catch {
+    toast.error('Failed to send email')
   }
+}
+    if (status === 'rejected' && seeker) {
+  try {
+    const res = await fetch('/api/send-rejection-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: seeker.email, name: seeker.full_name }),
+    })
+    const result = await res.json()
+    if (!result.success) throw new Error()
+    toast.success('Rejection email sent!')
+  } catch {
+    toast.error('Failed to send rejection email')
+  }
+}
+  }
+}
+
 
   const deleteSeeker = async (id: string) => {
     const { error } = await supabase.from('seekers').delete().eq('id', id)
@@ -88,15 +122,15 @@ export default function AdminDashboard() {
 
   if (!passwordVerified) {
     return (
-      <div className="flex  h-screen items-center justify-center bg-gray-900 text-white">
-        <div className="p-8 bg-gray-800 rounded-xl shadow-lg w-4/5 max-w-md">
+      <div className="flex  h-screen items-center justify-center bg-[#212121] text-white">
+        <div className="p-8 bg-[#181818] rounded-xl shadow-lg w-4/5 max-w-md">
           <h2 className="text-2xl font-semibold mb-4">Welcome Chief</h2>
           <input
             type="password"
             value={input}
             onChange={e => setInput(e.target.value)}
             placeholder="Enter admin password"
-            className="w-full p-3 rounded bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-3 rounded  text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
             <button
              onClick={() => {
@@ -106,7 +140,7 @@ export default function AdminDashboard() {
                  toast.error('Incorrect password')
                }
              }}
-             className="mt-5 w-full py-3 bg-blue-600 hover:bg-blue-700 rounded text-white font-semibold transition"
+             className="mt-5 w-full py-3 cursor-pointer bg-blue-600 hover:bg-blue-700 rounded text-white font-semibold transition"
            >
              Verify
            </button>
@@ -118,10 +152,10 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-900 text-white">
+    <div className="flex h-screen overflow-hidden bg-[#212121] text-white">
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 shadow-md left-0 bg-gray-800 w-64 p-6 space-y-6 transform transition-transform duration-300 ease-in-out z-40 lg:translate-x-0 ${
+        className={`fixed inset-y-0 shadow-md left-0 bg-[#181818] w-64 p-6 space-y-6 transform transition-transform duration-300 ease-in-out z-40 lg:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } lg:relative lg:block`}
       >
@@ -165,11 +199,11 @@ export default function AdminDashboard() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-auto">
         {/* Mobile Topbar */}
-        <header className="lg:hidden fixed top-o shadow-md w-full flex items-center justify-between bg-gray-900 p-4">
+        <header className="lg:hidden fixed top-o shadow-md w-full flex items-center justify-between bg-[#212121] p-4">
           <h1 className="text-xl font-semibold">Dashboard</h1>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="focus:outline-none text-white"
+            className="focus:outline-none cursor-pointer text-white"
             aria-label="Toggle Sidebar"
           >
             {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
@@ -191,16 +225,16 @@ export default function AdminDashboard() {
             {filteredSeekers.map(seeker => (
               <div
                 key={seeker.id}
-                className="bg-gray-800 rounded-lg shadow p-5 flex flex-col sm:flex-row sm:justify-between sm:items-center"
+                className="bg-[#212121] rounded-lg shadow p-5 flex flex-col sm:flex-row sm:justify-between sm:items-center"
               >
                 <div className="mb-4 sm:mb-0">
                   <p className="text-xl font-semibold">{seeker.full_name}</p>
                   <p className="text-sm text-gray-400">{seeker.email}</p>
                   <p className="text-sm text-gray-400">
-                    Age: {seeker.age} | Location: {seeker.location}
+                   <span className='font-bold text-white'>Age:</span>  {seeker.age} | <span className='font-bold text-white'>Location:</span> {seeker.location}
                   </p>
                   <p className="text-sm text-gray-400">
-                    Sponsor: {seeker.sponsor_type}
+                    <span className='font-bold text-white'>Sponsor: </span>{seeker.sponsor_type}
                   </p>
                 </div>
 
@@ -275,12 +309,12 @@ export default function AdminDashboard() {
       {/* Bio Modal */}
         {modalOpen && (
             <div className="fixed inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-gray-800 p-6 rounded-lg w-full max-w-md">
+            <div className="bg-[#171717] p-6 rounded-lg w-full max-w-md">
                 <h3 className="text-xl font-semibold mb-4">Seeker Bio</h3>
                 <p className="text-gray-300 whitespace-pre-wrap">{selectedBio}</p>
                 <button
                 onClick={closeBioModal}
-                className="mt-4 px-4 cursor-pointer w-full py-2 bg-blue-600 hover:bg-blue-700 rounded text-white transition"
+                className="mt-4 px-4 cursor-pointer w-full py-2 bg-[#212121] hover:bg-[#171717] rounded text-white transition"
                 >
                 Close
                 </button>
