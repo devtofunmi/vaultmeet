@@ -1,12 +1,9 @@
 'use client'
-
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { toast, ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { Menu, X } from 'lucide-react'
-
-
 
 type Seeker = {
   id: string
@@ -20,33 +17,42 @@ type Seeker = {
   status: 'pending' | 'approved' | 'rejected'
 }
 
+type Sponsor = {
+  id: string
+  name: string
+  email: string
+  sponsor_type: string
+  status: 'pending' | 'approved' | 'rejected'
+}
+
 export default function AdminDashboard() {
   const [seekers, setSeekers] = useState<Seeker[]>([])
+  const [sponsors, setSponsors] = useState<Sponsor[]>([])
   const [loading, setLoading] = useState(false)
   const [passwordVerified, setPasswordVerified] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedBio, setSelectedBio] = useState('')
-  const [stats, setStats] = useState({ pending: 0, approved: 0, rejected: 0 })
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all')
   const [input, setInput] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [tab, setTab] = useState<'seekers' | 'sponsors'>('seekers')
+  const [seekerStats, setSeekerStats] = useState({ pending: 0, approved: 0, rejected: 0 })
+  const [sponsorStats, setSponsorStats] = useState({ pending: 0, approved: 0, rejected: 0 })
 
   useEffect(() => {
-    if (passwordVerified) fetchSeekers()
+    if (passwordVerified) {
+      fetchSeekers()
+      fetchSponsors()
+    }
   }, [passwordVerified])
 
   const fetchSeekers = async () => {
     setLoading(true)
-    const { data, error } = await supabase
-      .from('seekers')
-      .select('*')
-      .order('created_at', { ascending: false })
-    if (error) {
-      toast.error('Failed to fetch seekers')
-      console.error(error)
-    } else {
+    const { data, error } = await supabase.from('seekers').select('*').order('created_at', { ascending: false })
+    if (error) toast.error('Failed to fetch seekers')
+    else {
       setSeekers(data)
-      setStats({
+      setSeekerStats({
         pending: data.filter(s => s.status === 'pending').length,
         approved: data.filter(s => s.status === 'approved').length,
         rejected: data.filter(s => s.status === 'rejected').length,
@@ -55,55 +61,57 @@ export default function AdminDashboard() {
     setLoading(false)
   }
 
-const updateStatus = async (id: string, status: 'approved' | 'rejected') => {
-  const seeker = seekers.find(s => s.id === id)
-
-  const { error } = await supabase.from('seekers').update({ status }).eq('id', id)
-
-  if (error) {
-    toast.error(`Failed to update`)
-  } else {
-    toast.success(`Marked as ${status}`)
-    fetchSeekers()
-
-   if (status === 'approved' && seeker) {
-  try {
-    const res = await fetch('/api/send-approval-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to: seeker.email, name: seeker.full_name }),
-    })
-    const result = await res.json()
-    if (!result.success) throw new Error()
-    toast.success('Approval email sent!')
-  } catch {
-    toast.error('Failed to send email')
-  }
-}
-    if (status === 'rejected' && seeker) {
-  try {
-    const res = await fetch('/api/send-rejection-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to: seeker.email, name: seeker.full_name }),
-    })
-    const result = await res.json()
-    if (!result.success) throw new Error()
-    toast.success('Rejection email sent!')
-  } catch {
-    toast.error('Failed to send rejection email')
-  }
-}
-  }
-}
-
-
-  const deleteSeeker = async (id: string) => {
-    const { error } = await supabase.from('seekers').delete().eq('id', id)
-    if (error) toast.error('Failed to delete')
+  const fetchSponsors = async () => {
+    const { data, error } = await supabase.from('sponsors').select('*').order('created_at', { ascending: false })
+    if (error) toast.error('Failed to fetch sponsors')
     else {
-      toast.success('Deleted successfully')
-      fetchSeekers()
+      setSponsors(data)
+      setSponsorStats({
+        pending: data.filter(s => s.status === 'pending').length,
+        approved: data.filter(s => s.status === 'approved').length,
+        rejected: data.filter(s => s.status === 'rejected').length,
+      })
+    }
+  }
+
+  const updateStatus = async (id: string, status: 'approved' | 'rejected', type: 'seeker' | 'sponsor') => {
+    const table = type === 'seeker' ? 'seekers' : 'sponsors'
+    const list = type === 'seeker' ? seekers : sponsors
+    const item = list.find(s => s.id === id)
+
+    const { error } = await supabase.from(table).update({ status }).eq('id', id)
+    if (error) return toast.error('Failed to update status')
+    toast.success(`Marked as ${status}`)
+    type === 'seeker' ? fetchSeekers() : fetchSponsors()
+
+    if (type === 'seeker' && item && status === 'approved') {
+      try {
+        const res = await fetch('/api/send-approval-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ to: (item as Seeker).email, name: (item as Seeker).full_name }),
+        })
+        const result = await res.json()
+        if (!result.success) throw new Error()
+        toast.success('Approval email sent!')
+      } catch {
+        toast.error('Failed to send email')
+      }
+    }
+
+    if (type === 'seeker' && item && status === 'rejected') {
+      try {
+        const res = await fetch('/api/send-rejection-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ to: (item as Seeker).email, name: (item as Seeker).full_name }),
+        })
+        const result = await res.json()
+        if (!result.success) throw new Error()
+        toast.success('Rejection email sent!')
+      } catch {
+        toast.error('Failed to send email')
+      }
     }
   }
 
@@ -117,12 +125,14 @@ const updateStatus = async (id: string, status: 'approved' | 'rejected') => {
     setSelectedBio('')
   }
 
-  const filteredSeekers =
-    filterStatus === 'all' ? seekers : seekers.filter(s => s.status === filterStatus)
+  const filteredSeekers = filterStatus === 'all' ? seekers : seekers.filter(s => s.status === filterStatus)
+  const filteredSponsors = filterStatus === 'all' ? sponsors : sponsors.filter(s => s.status === filterStatus)
+  const activeList = tab === 'seekers' ? filteredSeekers : filteredSponsors
+  const activeStats = tab === 'seekers' ? seekerStats : sponsorStats
 
   if (!passwordVerified) {
     return (
-      <div className="flex  h-screen items-center justify-center bg-[#212121] text-white">
+      <div className="flex h-screen items-center justify-center bg-[#212121] text-white">
         <div className="p-8 bg-[#181818] rounded-xl shadow-lg w-4/5 max-w-md">
           <h2 className="text-2xl font-semibold mb-4">Welcome Chief</h2>
           <input
@@ -130,21 +140,20 @@ const updateStatus = async (id: string, status: 'approved' | 'rejected') => {
             value={input}
             onChange={e => setInput(e.target.value)}
             placeholder="Enter admin password"
-            className="w-full p-3 rounded  text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-3 rounded text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-            <button
-             onClick={() => {
-               if (input === process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
-                 setPasswordVerified(true)
-               } else {
-                 toast.error('Incorrect password')
-               }
-             }}
-             className="mt-5 w-full py-3 cursor-pointer bg-blue-600 hover:bg-blue-700 rounded text-white font-semibold transition"
-           >
-             Verify
-           </button>
-
+          <button
+            onClick={() => {
+              if (input === process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
+                setPasswordVerified(true)
+              } else {
+                toast.error('Incorrect password')
+              }
+            }}
+            className="mt-5 w-full py-3 cursor-pointer bg-blue-600 hover:bg-blue-700 rounded text-white font-semibold transition"
+          >
+            Verify
+          </button>
         </div>
         <ToastContainer />
       </div>
@@ -162,180 +171,127 @@ const updateStatus = async (id: string, status: 'approved' | 'rejected') => {
         <h2 className="text-3xl font-bold mb-8">Admin</h2>
         <nav className="space-y-4">
           <button
-            onClick={() => setFilterStatus('all')}
+            onClick={() => setTab('seekers')}
+            className={`block w-full cursor-pointer  text-left px-3 py-2 rounded hover:bg-gray-700 transition ${
+              tab === 'seekers' ? 'bg-blue-600' : ''
+            }`}
+          >
+            Seekers ({seekers.length})
+          </button>
+          <button
+            onClick={() => setTab('sponsors')}
             className={`block w-full cursor-pointer text-left px-3 py-2 rounded hover:bg-gray-700 transition ${
-              filterStatus === 'all' ? 'bg-blue-600' : ''
+              tab === 'sponsors' ? 'bg-purple-600' : ''
             }`}
           >
-            All ({seekers.length})
+            Sponsors ({sponsors.length})
           </button>
-          <button
-            onClick={() => setFilterStatus('pending')}
-            className={`block w-full cursor-pointer text-left px-3 py-2 rounded hover:bg-yellow-600 transition ${
-              filterStatus === 'pending' ? 'bg-yellow-700' : ''
-            }`}
-          >
-            Pending ({stats.pending})
-          </button>
-          <button
-            onClick={() => setFilterStatus('approved')}
-            className={`block w-full cursor-pointer text-left px-3 py-2 rounded hover:bg-green-600 transition ${
-              filterStatus === 'approved' ? 'bg-green-700' : ''
-            }`}
-          >
-            Approved ({stats.approved})
-          </button>
-          <button
-            onClick={() => setFilterStatus('rejected')}
-            className={`block cursor-pointer w-full text-left px-3 py-2 rounded hover:bg-red-600 transition ${
-              filterStatus === 'rejected' ? 'bg-red-700' : ''
-            }`}
-          >
-            Rejected ({stats.rejected})
-          </button>
+
+          <hr className="border-gray-600 my-2" />
+
+          {['all', 'pending', 'approved', 'rejected'].map(status => (
+            <button
+              key={status}
+              onClick={() => setFilterStatus(status as any)}
+              className={`block w-full cursor-pointer text-left px-3 py-2 rounded hover:bg-gray-700 transition ${
+                filterStatus === status ? 'bg-gray-800' : ''
+              }`}
+            >
+              {status.charAt(0).toUpperCase() + status.slice(1)} ({status !== 'all' ? activeStats[status as keyof typeof activeStats] : activeList.length})
+            </button>
+          ))}
         </nav>
       </div>
 
-      {/* Main Content */}
+      {/* Main */}
       <div className="flex-1 flex flex-col overflow-auto">
         {/* Mobile Topbar */}
-        <header className="lg:hidden fixed top-o shadow-md w-full flex items-center justify-between bg-[#212121] p-4">
+        <header className="lg:hidden fixed top-0 shadow-md w-full flex items-center justify-between bg-[#212121] p-4 z-50">
           <h1 className="text-xl font-semibold">Dashboard</h1>
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="focus:outline-none cursor-pointer text-white"
-            aria-label="Toggle Sidebar"
-          >
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="focus:outline-none cursor-pointer text-white">
             {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </header>
 
-        <main className="p-6 space-y-6">
-          <h2 className="text-3xl font-semibold">Seeker List</h2>
+        <main className="p-6 space-y-6 mt-16 lg:mt-0">
+          <h2 className="text-3xl font-semibold">
+            {tab === 'seekers' ? 'Seeker List' : 'Sponsor List'}
+          </h2>
 
-          {loading && (
-            <p className="text-center text-gray-400">Loading seekers...</p>
+          {loading && <p className="text-center text-gray-400">Loading...</p>}
+          {!loading && activeList.length === 0 && (
+            <p className="text-center text-gray-500">No {tab} found.</p>
           )}
 
-          {!loading && filteredSeekers.length === 0 && (
-            <p className="text-center text-gray-500">No seekers found.</p>
-          )}
+          {activeList.map(item => (
+            <div
+              key={item.id}
+              className="bg-[#181818] rounded-lg shadow p-5 flex flex-col sm:flex-row sm:justify-between sm:items-center"
+            >
+              <div className="mb-4 sm:mb-0">
+                <p className="text-xl font-semibold">{'full_name' in item ? item.full_name : item.name}</p>
+                <p className="text-sm text-gray-400">{item.email}</p>
+                <p className="text-sm text-gray-400"><span className='font-bold text-white'>Sponsor Type:</span> {item.sponsor_type}</p>
+                {'age' in item && (
+                  <p className="text-sm text-gray-400"><span className='font-bold text-white'>Age:</span> {item.age} | <span className='font-bold text-white'>Location:</span> {item.location}</p>
+                )}
+              </div>
 
-          <div className="space-y-6">
-            {filteredSeekers.map(seeker => (
-              <div
-                key={seeker.id}
-                className="bg-[#212121] rounded-lg shadow p-5 flex flex-col sm:flex-row sm:justify-between sm:items-center"
-              >
-                <div className="mb-4 sm:mb-0">
-                  <p className="text-xl font-semibold">{seeker.full_name}</p>
-                  <p className="text-sm text-gray-400">{seeker.email}</p>
-                  <p className="text-sm text-gray-400">
-                   <span className='font-bold text-white'>Age:</span>  {seeker.age} | <span className='font-bold text-white'>Location:</span> {seeker.location}
-                  </p>
-                  <p className="text-sm text-gray-400">
-                    <span className='font-bold text-white'>Sponsor: </span>{seeker.sponsor_type}
-                  </p>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+              <div className="flex flex-wrap gap-3">
+                {'bio' in item && (
                   <button
-                    onClick={() => openBioModal(seeker.bio)}
-                    className="px-4 py-2 cursor-pointer bg-blue-600 hover:bg-blue-700 rounded transition"
-                    title="View Bio"
+                    onClick={() => openBioModal(item.bio)}
+                    className="px-4 py-2 cursor-pointer bg-blue-600 hover:bg-blue-700 rounded"
                   >
                     View Bio
                   </button>
+                )}
 
+                {'payment_proof_url' in item && (
                   <button
-                    onClick={() =>
-                      window.open(seeker.payment_proof_url, '_blank')
-                    }
-                    disabled={!seeker.payment_proof_url}
-                    className={`px-4 py-2 cursor-pointer rounded transition ${
-                      seeker.payment_proof_url
-                        ? 'bg-purple-600 hover:bg-purple-700'
-                        : 'bg-gray-600 cursor-not-allowed'
-                    }`}
-                    title={
-                      seeker.payment_proof_url
-                        ? 'View Payment Proof'
-                        : 'No payment proof available'
-                    }
+                    onClick={() => window.open(item.payment_proof_url, '_blank')}
+                    className="px-4 py-2 cursor-pointer bg-purple-600 hover:bg-purple-700 rounded"
                   >
                     View Proof
                   </button>
+                )}
 
-                  <button
-                    onClick={() => updateStatus(seeker.id, 'approved')}
-                    disabled={seeker.status === 'approved'}
-                    className={`px-4 py-2 cursor-pointer rounded text-white transition ${
-                      seeker.status === 'approved'
-                        ? 'bg-green-900 cursor-not-allowed'
-                        : 'bg-green-600 hover:bg-green-700'
-                    }`}
-                    title="Approve"
-                  >
-                    Approve
-                  </button>
-
-                  <button
-                    onClick={() => updateStatus(seeker.id, 'rejected')}
-                    disabled={seeker.status === 'rejected'}
-                    className={`px-4 cursor-pointer py-2 rounded text-white transition ${
-                      seeker.status === 'rejected'
-                        ? 'bg-red-900 cursor-not-allowed'
-                        : 'bg-red-600 hover:bg-red-700'
-                    }`}
-                    title="Reject"
-                  >
-                    Reject
-                  </button>
-
-                  <button
-                    onClick={() => deleteSeeker(seeker.id)}
-                    className="px-4 py-2 cursor-pointer bg-gray-700 hover:bg-gray-600 rounded text-white transition"
-                    title="Delete"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </main>
-      </div>
-
-      {/* Bio Modal */}
-        {modalOpen && (
-            <div className="fixed inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-[#171717] p-6 rounded-lg w-full max-w-md">
-                <h3 className="text-xl font-semibold mb-4">Seeker Bio</h3>
-                <p className="text-gray-300 whitespace-pre-wrap">{selectedBio}</p>
                 <button
-                onClick={closeBioModal}
-                className="mt-4 px-4 cursor-pointer w-full py-2 bg-[#212121] hover:bg-[#171717] rounded text-white transition"
+                  onClick={() => updateStatus(item.id, 'approved', tab === 'seekers' ? 'seeker' : 'sponsor')}
+                  disabled={item.status === 'approved'}
+                  className="px-4 py-2 cursor-pointer bg-green-600 hover:bg-green-700 rounded disabled:opacity-50"
                 >
-                Close
+                  Approve
                 </button>
+                <button
+                  onClick={() => updateStatus(item.id, 'rejected', tab === 'seekers' ? 'seeker' : 'sponsor')}
+                  disabled={item.status === 'rejected'}
+                  className="px-4 py-2 cursor-pointer bg-red-600 hover:bg-red-700 rounded disabled:opacity-50"
+                >
+                  Reject
+                </button>
+              </div>
             </div>
-            </div>
-        )}
-    
-        {/* Toast Notifications */}
+          ))}
 
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss={false}
-        draggable
-        pauseOnHover
-        theme="dark"
-      />
+          {/* Bio Modal */}
+          {modalOpen && (
+            <div className="fixed inset-0 z-50 bg-black/50 bg-opacity-50 flex justify-center items-center">
+              <div className="bg-[#181818] p-6 rounded-lg max-w-md w-full">
+                <h3 className="text-xl font-semibold mb-4">Seeker Bio</h3>
+                <p className="text-sm text-gray-300 whitespace-pre-line">{selectedBio}</p>
+                <button
+                  onClick={closeBioModal}
+                  className="mt-4 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          )}
+        </main>
+        <ToastContainer />
+      </div>
     </div>
   )
 }
