@@ -8,7 +8,7 @@ export async function POST(req: Request) {
 
   try {
     const data = await resend.emails.send({
-      from: 'VaultMeet <vaultmeet@gmail.com>',
+      from: 'VaultMeet <no-reply@vaultmeet.com>',
       to,
       subject: 'Update on Your VaultMeet Application',
       html: `
@@ -37,8 +37,9 @@ export async function POST(req: Request) {
     })
 
     return NextResponse.json({ success: true, data })
-  } catch (error) {
-    console.error(error)
-    return NextResponse.json({ success: false, error })
-  }
+  } catch (error: any) {
+  console.error('Email sending failed:', JSON.stringify(error, null, 2))
+  return NextResponse.json({ success: false, error: error?.message || 'Unknown error' })
+}
+
 }
