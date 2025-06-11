@@ -155,40 +155,45 @@ const ApplySeeker: React.FC = () => {
       <RootLayout>
         <main>
           <ToastContainer />
-          <div className="max-w-xl mx-auto w-11/12 p-8  h-screen rounded-lg  text-black">
-        <h2 className="text-2xl md:text-3xl font-semibold mb-4 text-center">
-        Complete Your Application
-      </h2>
-      <p className="mb-6 text-center text-gray-700">
-        Please make a one-time payment of{' '}
-        <span className="font-semibold text-black">$199</span> to continue.
-      </p>
-        <div className="mb-4 bg-gray-200 p-4 rounded">
-          <p><strong>Bank Transfer / Crypto (USDT)</strong></p>
-          <p>Account Name: VaultMeet</p>
-          <p>Account Number: 1234567890</p>
-          <p>Crypto Wallet: 0xABC...123</p>
-        </div>
-        <form onSubmit={handlePaymentSubmit}>
-          <label className="block mb-2 font-bold">Upload Payment Proof</label>
-          <input
-            type="file"
-            name="paymentProof"
-            accept="image/*"
-            onChange={handleChange}
-            className="mb-2"
-          />
-          {errors.paymentProof && <p className="text-red-500 text-sm">{errors.paymentProof}</p>}
+          <div className="max-w-xl mx-auto w-11/12 p-8 h-screen rounded-lg text-black">
+  <h2 className="text-2xl md:text-3xl font-semibold mb-4 text-center">
+    Complete Your Application
+  </h2>
+  <p className="mb-6 text-center text-gray-700">
+    Please make a one-time payment of{' '}
+    <span className="font-semibold text-black">$199</span> to continue.
+  </p>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="mt-4  w-full cursor-pointer px-4 py-2 bg-black text-white rounded hover:bg-gray-800"
-          >
-            {loading ? 'Submitting...' : 'Submit Proof'}
-          </button>
-        </form>
-      </div>
+  <div className="mb-4 bg-gray-200 p-4 rounded">
+    <p><strong>Payment Methods</strong></p>
+    <ul className="list-disc list-inside">
+      <li><strong>Gift Card:</strong> Amazon or Visa cards accepted</li>
+      <li><strong>Cash App:</strong> $VaultMeet</li>
+      <li><strong>PayPal:</strong> vaultmeet@example.com</li>
+    </ul>
+  </div>
+
+  <form onSubmit={handlePaymentSubmit}>
+    <label className="block mb-2 font-bold">Upload Payment Proof</label>
+    <input
+      type="file"
+      name="paymentProof"
+      accept="image/*"
+      onChange={handleChange}
+      className="mb-2"
+    />
+    {errors.paymentProof && <p className="text-red-500 text-sm">{errors.paymentProof}</p>}
+
+    <button
+      type="submit"
+      disabled={loading}
+      className="mt-4 w-full cursor-pointer px-4 py-2 bg-black text-white rounded hover:bg-gray-800"
+    >
+      {loading ? 'Submitting...' : 'Submit Proof'}
+    </button>
+  </form>
+</div>
+
       </main> 
       </RootLayout>
         
