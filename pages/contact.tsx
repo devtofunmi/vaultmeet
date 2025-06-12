@@ -2,6 +2,12 @@
 
 import { useState } from 'react';
 import RootLayout from './layout';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export default function ContactPage() {
   const [form, setForm] = useState({ name: '', email: '', message: '' });
@@ -16,14 +22,21 @@ export default function ContactPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // TODO: Send form data to backend or API
-    setSubmitted(true);
+
+    const { error } = await supabase.from('messages').insert([form]);
+
+    if (error) {
+      console.error(error);
+      alert('Failed to send message.');
+    } else {
+      setSubmitted(true);
+    }
   };
 
   return (
     <RootLayout>
       <main className="min-h-screen bg-pink-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto w-full flex flex-col md:flex-row justify-between ">
+        <div className="mx-auto w-full flex flex-col md:flex-row justify-between">
           <div>
             <div className="flex gap-2 text-gray-600">
               <p>Vaultmeet</p>
