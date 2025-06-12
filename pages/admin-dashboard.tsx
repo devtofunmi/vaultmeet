@@ -28,6 +28,7 @@ type Sponsor = {
 export default function AdminDashboard() {
   const [seekers, setSeekers] = useState<Seeker[]>([])
   const [sponsors, setSponsors] = useState<Sponsor[]>([])
+  // const [messages, setMessages] = useState<Messages[]>([])
   const [loading, setLoading] = useState(false)
   const [passwordVerified, setPasswordVerified] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
@@ -73,47 +74,74 @@ export default function AdminDashboard() {
       })
     }
   }
-
-  const updateStatus = async (id: string, status: 'approved' | 'rejected', type: 'seeker' | 'sponsor') => {
-    const table = type === 'seeker' ? 'seekers' : 'sponsors'
-    const list = type === 'seeker' ? seekers : sponsors
-    const item = list.find(s => s.id === id)
-
-    const { error } = await supabase.from(table).update({ status }).eq('id', id)
-    if (error) return toast.error('Failed to update status')
-    toast.success(`Marked as ${status}`)
-    type === 'seeker' ? fetchSeekers() : fetchSponsors()
-
-    if (type === 'seeker' && item && status === 'approved') {
-      try {
-        const res = await fetch('/api/send-approval-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ to: (item as Seeker).email, name: (item as Seeker).full_name }),
-        })
-        const result = await res.json()
-        if (!result.success) throw new Error()
-        toast.success('Approval email sent!')
-      } catch {
-        toast.error('Failed to send email')
-      }
-    }
-
-    if (type === 'seeker' && item && status === 'rejected') {
-      try {
-        const res = await fetch('/api/send-rejection-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ to: (item as Seeker).email, name: (item as Seeker).full_name }),
-        })
-        const result = await res.json()
-        if (!result.success) throw new Error()
-        toast.success('Rejection email sent!')
-      } catch {
-        toast.error('Failed to send email')
-      }
+  const fetchMessages = async () => {
+    const { data, error } = await supabase.from('sponsors').select('*').order('created_at', { ascending: false })
+    if (error) toast.error('Failed to fetch sponsors')
+    else {
+      setSponsors(data)
+      setSponsorStats({
+        pending: data.filter(s => s.status === 'pending').length,
+        approved: data.filter(s => s.status === 'approved').length,
+        rejected: data.filter(s => s.status === 'rejected').length,
+      })
     }
   }
+
+const updateStatus = async (
+  id: string,
+  status: 'approved' | 'rejected',
+  type: 'seeker' | 'sponsor'
+) => {
+  const table = type === 'seeker' ? 'seekers' : 'sponsors';
+  const list = type === 'seeker' ? seekers : sponsors;
+  const item = list.find(s => s.id === id);
+
+  // console.log('Updating status for:', { id, status, type, table });
+  if (!item) {
+    // console.warn('Item not found in list:', id);
+    return toast.error(`Could not find ${type} with id: ${id}`);
+  }
+
+  // Use the correct column name for each type
+  const column = type === 'seeker' ? 'status' : 'payment_status';
+
+  const { error } = await supabase.from(table).update({ [column]: status }).eq('id', id);
+  if (error) {
+    // console.error('Supabase update error:', error);
+    return toast.error('Failed to update status');
+  }
+
+  toast.success(`Marked as ${status}`);
+  type === 'seeker' ? fetchSeekers() : fetchSponsors();
+
+  // Send approval or rejection email
+  const endpoint =
+    status === 'approved'
+      ? '/api/send-approval-email'
+      : '/api/send-rejection-email';
+
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to: item.email,
+        name:
+          type === 'seeker'
+            ? (item as Seeker).full_name
+            : (item as Sponsor).name,
+      }),
+    });
+
+    const result = await res.json();
+    if (!result.success) throw new Error();
+
+    toast.success(`${status === 'approved' ? 'Approval' : 'Rejection'} email sent to ${type}`);
+  } catch (err) {
+    // console.error('Email error:', err);
+    toast.error(`Failed to send ${status} email to ${type}`);
+  }
+};
 
   const openBioModal = (bio: string) => {
     setSelectedBio(bio)
