@@ -105,15 +105,16 @@ const ApplySeeker: React.FC = () => {
           bio: form.bio,
           sponsor_type: form.desiredSponsorType,
           payment_proof_url: imageUrl,
-          payment_status: 'pending',
+          status: 'pending',
           created_at: new Date().toISOString(),
         },
       ])
 
       if (error) {
-        console.error('Supabase error:', error)
-        toast.error('Something went wrong while saving your application.')
-      } else {
+      console.error('Supabase insert error:', error.message)
+      toast.error(`Error: ${error.message}`)
+}
+ else {
         setPaymentSuccess(true)
         toast.success('Application submitted successfully!')
         setForm({
@@ -151,54 +152,75 @@ const ApplySeeker: React.FC = () => {
   }
 
   if (paymentStep) {
-    return (
-      <RootLayout>
-        <main>
-          <ToastContainer />
-          <div className="max-w-xl mx-auto w-11/12 p-8 h-screen rounded-lg text-black">
-  <h2 className="text-2xl md:text-3xl font-semibold mb-4 text-center">
-    Complete Your Application
-  </h2>
-  <p className="mb-6 text-center text-gray-700">
-    Please make a one-time payment of{' '}
-    <span className="font-semibold text-black">$199</span> to continue.
-  </p>
+  return (
+    <RootLayout>
+      <main>
+        <ToastContainer />
+        <div className="max-w-xl mx-auto w-11/12 p-8 h-screen flex flex-col justify-center text-black">
+          {/* Text Logo */}
+          <h1 className="text-center text-3xl font-bold mb-6 text-black">VaultMeet</h1>
 
-  <div className="mb-4 bg-gray-200 p-4 rounded">
-    <p><strong>Payment Methods</strong></p>
-    <ul className="list-disc list-inside">
-      <li><strong>Gift Card:</strong> Amazon or Visa cards accepted</li>
-      <li><strong>Cash App:</strong> $VaultMeet</li>
-      <li><strong>PayPal:</strong> vaultmeet@example.com</li>
-    </ul>
-  </div>
+          {/* Heading & Instructions */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-2xl md:text-3xl font-semibold mb-4 text-center">
+              Complete Your Application
+            </h2>
+            <p className="mb-6 text-center text-gray-700">
+              Please make a one-time payment of{' '}
+              <span className="font-semibold text-black">$199</span> to continue.
+            </p>
 
-  <form onSubmit={handlePaymentSubmit}>
-    <label className="block mb-2 font-bold">Upload Payment Proof</label>
-    <input
-      type="file"
-      name="paymentProof"
-      accept="image/*"
-      onChange={handleChange}
-      className="mb-2"
-    />
-    {errors.paymentProof && <p className="text-red-500 text-sm">{errors.paymentProof}</p>}
+            {/* Payment Methods */}
+            <div className="mb-6 bg-gray-100 p-4 rounded">
+              <p className="font-semibold mb-2">Accepted Payment Methods:</p>
+              <ul className="list-disc list-inside text-sm text-gray-800 space-y-1">
+                <li><strong>Gift Cards:</strong> Amazon or Visa (US only)</li>
+                <li><strong>PayPal:</strong> vaultmeet@example.com</li>
+                <li><strong>Opay:</strong> 1234567890 - VaultMeet Ltd</li>
+              </ul>
+            </div>
 
-    <button
-      type="submit"
-      disabled={loading}
-      className="mt-4 w-full cursor-pointer px-4 py-2 bg-black text-white rounded hover:bg-gray-800"
-    >
-      {loading ? 'Submitting...' : 'Submit Proof'}
-    </button>
-  </form>
-</div>
+            {/* Upload Payment Proof */}
+            <form onSubmit={handlePaymentSubmit}>
+              <label className="block mb-2 font-semibold">
+                Upload Payment Proof
+              </label>
+              <input
+                type="file"
+                name="paymentProof"
+                accept="image/*"
+                onChange={handleChange}
+                className="mb-2 w-full border rounded px-3 py-2"
+              />
+              {errors.paymentProof && (
+                <p className="text-red-500 text-sm mb-2">
+                  {errors.paymentProof}
+                </p>
+              )}
 
-      </main> 
-      </RootLayout>
-        
-    )
-  }
+              <button
+                type="submit"
+                disabled={loading}
+                className="mt-4 w-full cursor-pointer px-4 py-2 bg-black text-white rounded hover:bg-gray-800 transition"
+              >
+                {loading ? 'Submitting...' : 'Submit Proof'}
+              </button>
+            </form>
+
+            {/* Support Info */}
+            <p className="text-xs text-gray-600 mt-6 text-center">
+              Need help? Contact us at{' '}
+              <a href="mailto:support@vaultmeet.com" className="underline">
+                vaultmeet@gmail.com
+              </a>
+            </p>
+          </div>
+        </div>
+      </main>
+    </RootLayout>
+  )
+    }
+
 
   return (
     <RootLayout>
@@ -350,10 +372,10 @@ const ApplySeeker: React.FC = () => {
             
             <button
               type="submit"
-              className="w-full py-2 bg-black text-white rounded hover:bg-gray-800"
+              className="w-full py-2 cursor-pointer bg-black text-white rounded hover:bg-gray-800"
               >
                         {loading ? 'Please wait...' : 'Continue to payment'}
-</button>
+             </button>
           </form>
         </div>
       </main>
